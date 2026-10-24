@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SlothShelf</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232f6b4f'/%3E%3Ccircle cx='11' cy='15' r='2' fill='%23f3f6f3'/%3E%3Ccircle cx='21' cy='15' r='2' fill='%23f3f6f3'/%3E%3Cpath d='M12 21q4 3 8 0' stroke='%23f3f6f3' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f7f5; --surface:#ffffff; --surface-2:#e9eee9; --line:#d5ddd6; --ink:#16211b; --muted:#5b6a61;
+  --accent:#2f6b4f; --accent-ink:#ffffff; --accent-soft:#dcebe2;
+  --read:#2f6b4f; --skim:#a8690f; --skip:#7b827e; --bad:#b4372c;
+  --shadow:0 1px 2px rgba(22,33,27,.06),0 8px 24px -12px rgba(22,33,27,.18);
+  --r:14px; --r-s:9px;
+  --ease:cubic-bezier(0.23,1,0.32,1);
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI Variable Display","Trebuchet MS",system-ui,sans-serif;
+  --body:"Geist","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1511; --surface:#151e19; --surface-2:#1c2822; --line:#27352d; --ink:#e6eee8; --muted:#8fa196;
+  --accent:#6fcf9b; --accent-ink:#0b1510; --accent-soft:#1d3a2b;
+  --read:#6fcf9b; --skim:#e0a84a; --skip:#7f8d85; --bad:#f08075;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);}}
+:root[data-theme="dark"]{
+  --bg:#0e1511; --surface:#151e19; --surface-2:#1c2822; --line:#27352d; --ink:#e6eee8; --muted:#8fa196;
+  --accent:#6fcf9b; --accent-ink:#0b1510; --accent-soft:#1d3a2b;
+  --read:#6fcf9b; --skim:#e0a84a; --skip:#7f8d85; --bad:#f08075;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -14px rgba(0,0,0,.6);}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased;min-height:100dvh;position:relative}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:44px 44px;opacity:.38;
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 20%,transparent 75%)}
+body::after{content:"";position:fixed;width:620px;height:620px;right:-180px;top:-260px;border-radius:50%;pointer-events:none;z-index:0;background:radial-gradient(circle,var(--accent-soft),transparent 68%)}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:22px 20px 80px}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.025em;margin:0;line-height:1.08;font-weight:700}
+body{font-size:14.5px;font-weight:400}
+.sub,.why,.hint,.tag{font-weight:400}
+.card h2{font-size:22px;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+.card h2::after{content:"";display:block;width:26px;height:3px;border-radius:3px;background:var(--accent);margin-top:9px}
+.item h3,.pick h3{font-weight:700;font-size:18px}
+.hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:30px;align-items:center;margin:6px 0 32px}
+.hero h2{font-size:clamp(38px,6vw,68px);font-weight:800;letter-spacing:-.045em;line-height:.98}
+.hero h2 em{font-style:normal;color:var(--accent)}
+.hero p{max-width:46ch;color:var(--muted);font-size:16px;margin:16px 0 20px}
+.hero .facts{display:flex;gap:10px;flex-wrap:wrap}
+.hero .facts span{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 14px;font-size:13px;font-weight:500}
+.bob{animation:bob 4.5s ease-in-out infinite;transform-origin:50% 100%}
+.sway{animation:sway 5s ease-in-out infinite;transform-box:fill-box;transform-origin:0 100%}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes sway{50%{transform:rotate(4deg)}}
+@media (prefers-reduced-motion:reduce){.bob,.sway{animation:none}}
+.hero .sloth{width:100%;height:auto;max-height:300px;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(22,33,27,.18))}
+@media (max-width:760px){.hero{grid-template-columns:1fr}.hero .sloth{max-height:190px}}
+.card{border-radius:18px;box-shadow:0 1px 0 var(--line),0 18px 40px -28px rgba(22,33,27,.35)}
+.stamp{font-family:var(--display)}
+.pick .num{font-family:var(--display);font-weight:800;font-size:30px;color:var(--accent-soft);-webkit-text-stroke:1.5px var(--accent)}
+button,input,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:26px}
+.brand{display:flex;align-items:center;gap:11px}
+.brand h1{font-size:24px;font-weight:800}
+.logo{width:40px;height:40px;flex:none}
+.tag{color:var(--muted);font-size:14px}
+.spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:13px;color:var(--muted)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--skip)}
+.pill.ok::before{background:var(--read)} .pill.bad::before{background:var(--bad)}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:99px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer;transition:transform 160ms var(--ease)}
+.icon-btn:active{transform:scale(.94)}
+
+/* layout */
+.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;align-items:start}
+aside{position:sticky;top:18px;display:grid;gap:16px}
+main{display:grid;gap:22px;min-width:0}
+@media (max-width:900px){.grid{grid-template-columns:1fr}aside{position:static}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.card h2{font-size:19px;margin-bottom:4px}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:var(--r-s);padding:9px 14px;cursor:pointer;font-weight:500;
+  transition:transform 160ms var(--ease),background 160ms var(--ease),border-color 160ms var(--ease);display:inline-flex;align-items:center;gap:8px}
+.btn:active{transform:scale(.97)}
+@media (hover:hover){.btn:hover{border-color:var(--accent)}}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{padding:6px 11px;font-size:13px}
+.btn[disabled]{opacity:.55;cursor:wait}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+
+textarea,input[type=text]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-s);padding:10px 12px;transition:border-color 160ms var(--ease)}
+textarea{min-height:104px;resize:vertical}
+.drop{margin:10px 0;border:1.5px dashed var(--line);border-radius:var(--r-s);padding:12px;text-align:center;color:var(--muted);font-size:13.5px;cursor:pointer;transition:border-color 160ms var(--ease),background 160ms var(--ease)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.hint{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+
+/* goals */
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--ink);border-radius:99px;padding:3px 6px 3px 11px;font-size:13px}
+.chip button{border:0;background:transparent;cursor:pointer;color:var(--muted);width:20px;height:20px;border-radius:50%;line-height:1}
+.chip button:hover{color:var(--bad)}
+
+/* overview */
+.overview{display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center}
+@media (max-width:640px){.overview{grid-template-columns:1fr;justify-items:center;text-align:center}}
+.big{font-family:var(--display);font-size:46px;line-height:1;letter-spacing:-.03em}
+.legend{display:grid;gap:7px;font-size:13.5px}
+.legend span{display:flex;align-items:center;gap:8px}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+.ring-wrap{text-align:center;font-size:12.5px;color:var(--muted)}
+.ring-wrap b{display:block;font-family:var(--display);font-size:18px;color:var(--ink)}
+
+/* digest */
+.digest-head{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px}
+.pick{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.pick:first-of-type{border-top:0}
+.num{font-family:var(--display);font-size:26px;color:var(--accent);line-height:1}
+.pick h3{font-size:16.5px;margin-bottom:4px}
+.pick h3 a{color:var(--ink);text-decoration:none}
+@media (hover:hover){.pick h3 a:hover{color:var(--accent)}}
+
+/* list */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.filters button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:5px 13px;font-size:13px;cursor:pointer;transition:transform 160ms var(--ease)}
+.filters button:active{transform:scale(.97)}
+.filters button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.item{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 16px 14px 20px;margin-bottom:12px;overflow:hidden;
+  animation:rise 320ms var(--ease) both;animation-delay:calc(var(--i,0)*40ms)}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--skip)}
+.item.read::before{background:var(--read)} .item.skim::before{background:var(--skim)} .item.skip::before{background:var(--skip)}
+.item.skip{opacity:.78}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.item h3{font-size:17px;margin-bottom:6px}
+.item h3 a{color:var(--ink);text-decoration:none}
+@media (hover:hover){.item h3 a:hover{color:var(--accent)}}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.stamp{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:6px;padding:1px 7px}
+.stamp.read{color:var(--read)} .stamp.skim{color:var(--skim)} .stamp.skip{color:var(--skip)}
+.tagx{font-size:12px;background:var(--surface-2);border-radius:6px;padding:1px 8px;color:var(--muted)}
+.badge{font-size:12px;border:1px dashed var(--line);border-radius:6px;padding:1px 8px;color:var(--muted)}
+.topic{font-size:12px;color:var(--accent);font-weight:600}
+.points{margin:8px 0;padding-left:18px}
+.points li{margin:2px 0}
+.try{margin:8px 0;padding:8px 11px;background:var(--accent-soft);border-radius:var(--r-s);font-size:14px}
+.why{color:var(--muted);font-size:13.5px}
+.acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.state{color:var(--muted);font-size:13px;align-self:center}
+
+/* feedback */
+.skel{height:92px;border-radius:var(--r);margin-bottom:12px;background:linear-gradient(90deg,var(--surface-2),var(--surface),var(--surface-2));background-size:200% 100%;animation:sh 1.3s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.empty{text-align:center;padding:34px 16px;color:var(--muted)}
+.empty svg{width:64px;height:64px;margin-bottom:8px}
+.toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:8px;z-index:20}
+.toast{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:var(--r-s);font-size:14px;max-width:340px;box-shadow:var(--shadow);animation:rise 220ms var(--ease) both}
+.toast.err{background:var(--bad);color:#fff}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:rot .6s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important}}
+</style>
+</head>
+<body>
+<script>
+(() => {
+  const mk = (i, v, t, q) => ({_id: String(i), url: 'https://example.com/' + i, status: 'carded', user: {state: 'unread'}, source_quality: q || 'full',
+    title: ['Python tricks every beginner misses','Ten AI tools worth trying this term','Why your RAG pipeline is slow','Ten productivity hacks (listicle)'][i % 4],
+    card: {verdict: v, topic: t, tags: ['python', 'tips', 'ai'], summary: 'Five built-in features that replace common loops.',
+      overview: 'The reel walks through five built-in Python features that replace common loops. It starts with enumerate, then zip, then f-string format specs, and ends with a tip on merging dictionaries. Each one is shown on a short example.',
+      key_points: ['enumerate replaces range(len(x)) and gives index and item together.', 'zip pairs two lists and stops at the shorter one.', 'f-strings accept format specs such as :.2f.', 'dict1 | dict2 merges dictionaries in Python 3.9+.'],
+      terms: ['enumerate: built-in that yields (index, item)', 'zip: pairs items from several iterables'], try_this: 'Rewrite one loop in your last project with enumerate.', reason: 'Matches your goal of learning Python.'}});
+  const links = [mk(0,'read','Python'), mk(1,'read','AI tools','caption'), mk(2,'skim','RAG','note'), mk(3,'skip','Misc')];
+  const data = {
+    '/api/links': links,
+    '/api/stats': {links_in: 42, status: {carded: 38, new: 3, failed: 1}, verdicts: {read: 14, skim: 16, skip: 8}, states: {}, agreement: {checked: 9, agreed: 7, rate: 0.778}},
+    '/api/digest/latest': {week: '2026-W43', stats: {links_in: 42, carded: 38, picked: 2}, picks: links.slice(0, 2)},
+    '/api/goals': {goals: ['learn Python for ML', 'find useful AI tools']},
+    '/api/health': {mongo: true, ollama: true, models: {'gemma2:2b': true}},
+    '/api/search': links.slice(0, 2),
+  };
+  const real = window.fetch;
+  window.fetch = async (url, opts) => {
+    const path = String(url).split('?')[0];
+    if (path === '/api/digest/pdf') return new Response(JSON.stringify({detail: 'The PDF digest works in the local app. This page is a demo.'}), {status: 400});
+    const body = data[path] ?? (path === '/api/digest' ? data['/api/digest/latest'] : {ok: true, inserted: 0, duplicates: 0, invalid: 0, processed: 0, carded: 0, failed: 0, remaining: 0, queued: 0, goals: data['/api/goals'].goals});
+    return new Response(JSON.stringify(body), {status: 200, headers: {'Content-Type': 'application/json'}});
+  };
+})();
+</script>
+<div style="position:relative;z-index:5;background:#16211b;color:#e6eee8;text-align:center;padding:9px 14px;font:14px system-ui">
+Demo with sample data. The real SlothShelf runs on your laptop with Gemma and MongoDB Atlas.
+<a href="https://github.com/hiyalukka/slothshelf" style="color:#6fcf9b">Get the code</a></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="var(--accent)"/>
+        <ellipse cx="20" cy="21" rx="13" ry="11" fill="var(--accent-ink)" opacity=".16"/>
+        <ellipse cx="13.5" cy="19" rx="3.6" ry="2.6" fill="var(--accent-ink)" transform="rotate(-18 13.5 19)"/>
+        <ellipse cx="26.5" cy="19" rx="3.6" ry="2.6" fill="var(--accent-ink)" transform="rotate(18 26.5 19)"/>
+        <circle cx="13.5" cy="19.3" r="1.1" fill="var(--accent)"/><circle cx="26.5" cy="19.3" r="1.1" fill="var(--accent)"/>
+        <path d="M16 26q4 3 8 0" stroke="var(--accent-ink)" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <h1>SlothShelf</h1>
+    </div>
+    <div class="spacer"></div>
+    <div id="health" class="row"></div>
+    <button class="icon-btn" id="theme" aria-label="Toggle theme" title="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg>
+    </button>
+  </header>
+
+  <section class="hero">
+    <div>
+      <h2>Save fast.<br><em>Read slow.</em><br>Skip the rest.</h2>
+      <p>Drop in the links and reels you keep saving. Gemma reads them on your laptop and tells you what is worth your evening.</p>
+      <div class="facts"><span>Runs locally</span><span>Weekly PDF digest</span><span>Learns your taste</span></div>
+    </div>
+    
+  </section>
+
+  <div class="grid">
+    <aside>
+      <section class="card">
+        <h2>Feed the shelf</h2>
+        <p class="sub">Paste links, or drop a bookmarks file or WhatsApp export.</p>
+        <textarea id="paste" placeholder="https://example.com/article&#10;https://instagram.com/reel/abc  Python tip: use enumerate instead of range(len(x))"></textarea>
+        <div class="drop" id="drop" tabindex="0" role="button">Drop a file here or click to choose<input type="file" id="file" hidden></div>
+        <div class="row">
+          <button class="btn primary" id="btnImport">Add to shelf</button>
+        </div>
+        <p class="hint">Instagram reels cannot be read without a login. Put the caption on the same line as the link and SlothShelf will use it.</p>
+      </section>
+
+      <section class="card">
+        <h2>Let Gemma read</h2>
+        <p class="sub" id="pending">Runs on your laptop, a few links at a time.</p>
+        <div class="row">
+          <button class="btn primary" id="btnProcess">Read next batch</button>
+          <button class="btn" id="btnRetry">Retry failed</button>
+          <button class="btn" id="btnReread" title="Re-read cards made before key points existed">Re-read old cards</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Your goals</h2>
+        <p class="sub">Gemma weighs links against these.</p>
+        <div class="row" style="flex-wrap:nowrap"><input type="text" id="goal" placeholder="e.g. learn Python for ML"><button class="btn small" id="btnGoal">Add</button></div>
+        <div class="chips" id="goals"></div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="card">
+        <div class="overview" id="overview"></div>
+      </section>
+
+      <section class="card" id="digestCard">
+        <div class="digest-head">
+          <div style="flex:1;min-width:200px"><h2>Weekly digest</h2><p class="sub" id="digestSub">Your best reads for the week, with the key points pulled out.</p></div>
+          <div class="row">
+            <button class="btn primary" id="btnDigest">Build this week</button>
+            <button class="btn" id="btnPdf"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>Download PDF</button>
+          </div>
+        </div>
+        <div id="digest"></div>
+      </section>
+
+      <section>
+        <div class="card">
+          <h2>Search by meaning</h2>
+          <div class="row" style="margin-top:8px"><input type="text" id="q" placeholder="what was that thing about prompt caching?" style="flex:1;min-width:200px"><button class="btn" id="btnSearch">Search</button></div>
+          <p class="hint" id="searchMsg"></p>
+        </div>
+        <div class="filters" id="filters"></div>
+        <div id="list"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '#';
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  if (!r.ok) {
+    let m = r.statusText;
+    try { m = (await r.json()).detail || m; } catch {}
+    throw new Error(typeof m === 'string' ? m : JSON.stringify(m));
+  }
+  return r.json();
+}
+const post = (p, b) => api(p, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(b ?? {})});
+
+function toast(msg, err) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (err ? ' err' : '');
+  t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity 200ms'; t.style.opacity = 0; setTimeout(() => t.remove(), 220); }, err ? 6000 : 3200);
+}
+async function busy(btn, fn) {
+  const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Working';
+  try { return await fn(); } catch (e) { toast(e.message, true); } finally { btn.disabled = false; btn.innerHTML = old; }
+}
+
+/* theme */
+const root = document.documentElement;
+try { const t = localStorage.getItem('theme'); if (t) root.dataset.theme = t; } catch {}
+$('#theme').onclick = () => {
+  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme:dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('theme', root.dataset.theme); } catch {}
+};
+
+/* state */
+let links = [], filter = 'all', searchMode = false;
+const FILTERS = [['all','All'],['read','Read it'],['skim','Skim'],['skip','Skip'],['unread','Unread'],['failed','Could not read']];
+const match = l => filter === 'all' ? true
+  : filter === 'failed' ? l.status === 'failed'
+  : filter === 'unread' ? (l.user?.state || 'unread') === 'unread' && l.status === 'carded'
+  : l.card?.verdict === filter;
+
+/* overview */
+function countUp(el, to) {
+  if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = to; return; }
+  const t0 = performance.now();
+  const step = t => { const p = Math.min(1, (t - t0) / 700), e = 1 - Math.pow(1 - p, 3); el.textContent = Math.round(to * e); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function donut(v) {
+  const total = v.read + v.skim + v.skip, R = 46, C = 2 * Math.PI * R;
+  const segs = [['read','--read'],['skim','--skim'],['skip','--skip']];
+  let off = 0;
+  const arcs = total ? segs.map(([k, c]) => {
+    const len = v[k] / total * C, s = `<circle cx="60" cy="60" r="${R}" fill="none" stroke="var(${c})" stroke-width="14" stroke-dasharray="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`;
+    off += len; return s;
+  }).join('') : '';
+  return `<svg width="130" height="130" viewBox="0 0 120 120" role="img" aria-label="Verdict split"><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="14"/>${arcs}</svg>`;
+}
+function ring(rate) {
+  const R = 30, C = 2 * Math.PI * R, p = rate == null ? 0 : rate;
+  return `<svg width="84" height="84" viewBox="0 0 80 80" role="img" aria-label="Agreement rate"><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="8"/><circle cx="40" cy="40" r="${R}" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="${p * C} ${C}" transform="rotate(-90 40 40)"/></svg>`;
+}
+async function loadStats() {
+  const s = await api('/api/stats');
+  const v = s.verdicts, a = s.agreement, carded = s.status.carded || 0, pend = s.status.new || 0;
+  $('#overview').innerHTML = `
+    <div style="position:relative;display:grid;place-items:center">${donut(v)}<div style="position:absolute;text-align:center"><div class="big" id="nLinks">0</div><div class="tag" style="font-size:12px">saved</div></div></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--read)"></i><b>${v.read}</b> worth reading</span>
+      <span><i class="sw" style="background:var(--skim)"></i><b>${v.skim}</b> to skim</span>
+      <span><i class="sw" style="background:var(--skip)"></i><b>${v.skip}</b> safe to skip</span>
+      <span class="tag">${carded} read by Gemma, ${pend} waiting${s.status.failed ? ', ' + s.status.failed + ' unreadable' : ''}</span>
+    </div>
+    <div class="ring-wrap">${ring(a.rate)}<b>${a.rate == null ? 'n/a' : Math.round(a.rate * 100) + '%'}</b>Gemma agreed with you<br>(${a.checked} checked)</div>`;
+  countUp($('#nLinks'), s.links_in);
+  $('#pending').textContent = pend ? `${pend} link${pend > 1 ? 's' : ''} waiting to be read.` : 'Nothing waiting. Add some links.';
+}
+
+/* cards */
+function cardBody(l, full) {
+  const c = l.card || {};
+  const q = l.source_quality === 'caption' ? '<span class="badge">caption only</span>' : l.source_quality === 'note' ? '<span class="badge">from your note</span>' : '';
+  const pts = (c.key_points || []).length ? `<ul class="points">${c.key_points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
+  return `<div class="meta"><span class="stamp ${esc(c.verdict)}">${esc(c.verdict)}</span>${c.topic ? `<span class="topic">${esc(c.topic)}</span>` : ''}${(c.tags || []).slice(0, 4).map(t => `<span class="tagx">${esc(t)}</span>`).join('')}${q}</div>
+    <p style="margin:0">${esc(full && c.overview ? c.overview : c.summary)}</p>${pts}
+    ${full && (c.terms || []).length ? `<div class="why" style="margin-top:6px"><b>Worth knowing:</b> ${c.terms.map(esc).join(' | ')}</div>` : ''}
+    ${c.try_this ? `<div class="try"><b>Try this:</b> ${esc(c.try_this)}</div>` : ''}
+    ${full && c.reason ? `<div class="why">${esc(c.reason)}</div>` : ''}`;
+}
+function renderList(items) {
+  if (!items.length) {
+    $('#list').innerHTML = `<div class="card empty"><svg viewBox="0 0 64 64" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><rect x="10" y="22" width="44" height="30" rx="8"/><path d="M22 36h4M38 36h4M28 44q4 3 8 0"/><path d="M20 22v-6m24 6v-6"/></svg><div><b>Nothing here yet</b></div><div>Paste a few links on the left, then let Gemma read them.</div></div>`;
+    return;
+  }
+  $('#list').innerHTML = items.map((l, i) => {
+    const id = esc(l._id || l.id), st = l.user?.state || 'unread', url = esc(safeUrl(l.url));
+    if (l.status !== 'carded') {
+      const msg = l.status === 'failed' ? `Could not read: ${esc(l.error)}` : 'Waiting for Gemma';
+      return `<article class="item" style="--i:${Math.min(i, 8)}"><h3><a href="${url}" target="_blank" rel="noopener">${esc(l.title || l.url)}</a></h3><div class="why">${msg}</div></article>`;
+    }
+    return `<article class="item ${esc(l.card.verdict)}" style="--i:${Math.min(i, 8)}">
+      <h3><a href="${url}" target="_blank" rel="noopener">${esc(l.title || l.url)}</a></h3>${cardBody(l, true)}
+      <div class="acts">${st === 'unread'
+        ? `<button class="btn small" data-m="${id}" data-s="read">Read it</button><button class="btn small" data-m="${id}" data-s="loved">Loved it</button><button class="btn small" data-m="${id}" data-s="skipped">Skip</button>`
+        : `<span class="state">Marked: ${esc(st)}</span><button class="btn small" data-m="${id}" data-s="unread">Undo</button>`}</div></article>`;
+  }).join('');
+}
+function renderFilters() {
+  $('#filters').innerHTML = FILTERS.map(([k, n]) => `<button class="${filter === k ? 'on' : ''}" data-f="${k}">${n} (${links.filter(l => { const f = filter; filter = k; const r = match(l); filter = f; return r; }).length})</button>`).join('');
+}
+async function loadLinks() {
+  $('#list').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  links = await api('/api/links');
+  renderFilters(); renderList(links.filter(match));
+}
+
+/* digest */
+function renderDigest(d) {
+  if (!d || !d.picks || !d.picks.length) {
+    $('#digest').innerHTML = '<div class="empty" style="padding:18px"><div>No digest yet. Read some links, then build this week.</div></div>';
+    return;
+  }
+  $('#digestSub').textContent = `Week ${d.week}. ${d.stats.links_in} saved, ${d.stats.carded} read, ${d.stats.picked} picked for you.`;
+  $('#digest').innerHTML = d.picks.map((p, i) => `<div class="pick"><div class="num">${i + 1}</div><div>
+    <h3><a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title || p.url)}</a></h3>${cardBody(p, true)}</div></div>`).join('');
+}
+$('#btnDigest').onclick = e => busy(e.currentTarget, async () => { renderDigest(await post('/api/digest')); toast('Digest built'); });
+$('#btnPdf').onclick = e => busy(e.currentTarget, async () => {
+  const r = await fetch('/api/digest/pdf');
+  if (!r.ok) throw new Error('Could not build the PDF');
+  const name = (r.headers.get('content-disposition') || '').match(/filename="?([^"]+)"?/)?.[1] || 'slothshelf-digest.pdf';
+  const url = URL.createObjectURL(await r.blob());
+  const a = Object.assign(document.createElement('a'), {href: url, download: name});
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+  toast('PDF downloaded');
+});
+
+/* goals */
+async function loadGoals() {
+  const {goals} = await api('/api/goals');
+  $('#goals').innerHTML = goals.map(g => `<span class="chip">${esc(g)}<button data-g="${esc(g)}" aria-label="Remove goal">&times;</button></span>`).join('');
+}
+$('#btnGoal').onclick = async () => {
+  const t = $('#goal').value.trim(); if (!t) return;
+  try { await post('/api/goals', {text: t}); $('#goal').value = ''; loadGoals(); } catch (e) { toast(e.message, true); }
+};
+$('#goal').onkeydown = e => { if (e.key === 'Enter') $('#btnGoal').click(); };
+$('#goals').onclick = async e => {
+  const g = e.target.dataset?.g; if (!g) return;
+  await api('/api/goals', {method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text: g})});
+  loadGoals();
+};
+
+/* import + process */
+const drop = $('#drop'), fileIn = $('#file');
+drop.onclick = () => fileIn.click();
+drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileIn.click(); } };
+fileIn.onchange = () => { if (fileIn.files[0]) drop.firstChild.textContent = fileIn.files[0].name; };
+['dragenter','dragover'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) { fileIn.files = e.dataTransfer.files; drop.firstChild.textContent = e.dataTransfer.files[0].name; } });
+
+$('#btnImport').onclick = e => busy(e.currentTarget, async () => {
+  const f = fileIn.files[0], t = $('#paste').value.trim();
+  if (!f && !t) { toast('Paste some links or choose a file first', true); return; }
+  const fd = new FormData(); f ? fd.append('file', f) : fd.append('text', t);
+  const r = await api('/api/import', {method:'POST', body: fd});
+  toast(`Added ${r.inserted}, ${r.duplicates} duplicates, ${r.invalid} invalid`);
+  $('#paste').value = ''; fileIn.value = ''; drop.firstChild.textContent = 'Drop a file here or click to choose';
+  await refresh();
+});
+$('#btnProcess').onclick = e => busy(e.currentTarget, async () => {
+  const r = await api('/api/process?limit=3', {method:'POST'});
+  toast(`Read ${r.carded}, failed ${r.failed}, ${r.remaining} left`); await refresh();
+});
+$('#btnRetry').onclick = e => busy(e.currentTarget, async () => {
+  const r = await api('/api/process?limit=20&retry_failed=true', {method:'POST'});
+  toast(`Read ${r.carded}, failed ${r.failed}`); await refresh();
+});
+$('#btnReread').onclick = e => busy(e.currentTarget, async () => {
+  const r = await post('/api/reread-old');
+  toast(r.queued ? `${r.queued} old cards queued. Press Read next batch.` : 'No old cards to redo'); await refresh();
+});
+
+/* search + list actions */
+async function runSearch() {
+  const q = $('#q').value.trim();
+  if (q.length < 2) { searchMode = false; $('#searchMsg').textContent = ''; renderList(links.filter(match)); return; }
+  $('#searchMsg').textContent = 'Searching...';
+  try {
+    const res = await api('/api/search?q=' + encodeURIComponent(q));
+    searchMode = true;
+    $('#searchMsg').textContent = res.length ? `${res.length} closest by meaning` : 'Nothing close found.';
+    renderList(res);
+  } catch (e) { $('#searchMsg').textContent = e.message; }
+}
+$('#btnSearch').onclick = runSearch;
+$('#q').onkeydown = e => { if (e.key === 'Enter') runSearch(); };
+$('#filters').onclick = e => {
+  const f = e.target.dataset?.f; if (!f) return;
+  filter = f; searchMode = false; $('#searchMsg').textContent = '';
+  renderFilters(); renderList(links.filter(match));
+};
+$('#list').onclick = async e => {
+  const id = e.target.dataset?.m; if (!id) return;
+  try {
+    await post(`/api/links/${id}/mark`, {state: e.target.dataset.s});
+    await refresh(true);
+  } catch (err) { toast(err.message, true); }
+};
+
+/* health */
+async function loadHealth() {
+  try {
+    const h = await api('/api/health');
+    const models = Object.entries(h.models || {});
+    const modelsOk = models.length && models.every(([, ok]) => ok);
+    $('#health').innerHTML = `<span class="pill ${h.mongo ? 'ok' : 'bad'}">Atlas ${h.mongo ? 'connected' : 'down'}</span><span class="pill ${h.ollama && modelsOk ? 'ok' : 'bad'}">Ollama ${!h.ollama ? 'down' : modelsOk ? 'ready' : 'model missing'}</span>`;
+  } catch (e) { $('#health').innerHTML = `<span class="pill bad">${esc(e.message)}</span>`; }
+}
+
+async function refresh(keepSearch) {
+  await Promise.all([loadStats(), (async () => { links = await api('/api/links'); renderFilters(); if (!(keepSearch && searchMode)) renderList(links.filter(match)); })()]);
+}
+(async () => {
+  loadHealth(); loadGoals();
+  try { renderDigest(await api('/api/digest/latest')); } catch { renderDigest(null); }
+  try { await loadStats(); await loadLinks(); } catch (e) { toast(e.message, true); }
+})();
+</script>
+</body>
+</html>
