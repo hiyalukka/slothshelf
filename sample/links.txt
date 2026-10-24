@@ -1,0 +1,6 @@
+https://en.wikipedia.org/wiki/Retrieval-augmented_generation
+https://en.wikipedia.org/wiki/Sloth
+https://en.wikipedia.org/wiki/Vector_database
+https://en.wikipedia.org/wiki/Large_language_model
+https://en.wikipedia.org/wiki/Python_(programming_language)
+https://en.wikipedia.org/wiki/MongoDB
